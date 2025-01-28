@@ -53,6 +53,19 @@ serviceAccount:
 # @default -- see `values.yaml`
 bootstrapScript: |
   #!/bin/bash
+  echo "Iniciando Bootstrap Script..."
+
+  # Atualiza o pip (opcional)
+  pip install --upgrade pip
+
+  # Instala pacotes extras necessários
+  pip install psycopg2-binary
+  pip install authlib==1.2.0
+  pip install "PyAthena[Pandas]>=1.0.0"
+  pip install pyathenajdbc
+
+  echo "Pacotes extras instalados com sucesso!"
+
   if [ ! -f ~/bootstrap ]; then echo "Running Superset with uid {{ .Values.runAsUser }}" > ~/bootstrap; fi
 
 # -- The name of the secret which we will use to generate a superset_config.py file
@@ -142,38 +155,53 @@ extraVolumeMounts: []
 # -- A dictionary of overrides to append at the end of superset_config.py - the name does not matter
 # WARNING: the order is not guaranteed
 # Files can be passed as helm --set-file configOverrides.my-override=my-file.py
-configOverrides: {}
+configOverrides:
   # extend_timeout: |
   #    # Extend timeout to allow long running queries.
   #    SUPERSET_WEBSERVER_TIMEOUT = ...
-  # enable_oauth: |
-  #   from flask_appbuilder.security.manager import (AUTH_DB, AUTH_OAUTH)
-  #   AUTH_TYPE = AUTH_OAUTH
-  #   OAUTH_PROVIDERS = [
-  #       {
-  #           "name": "google",
-  #           "whitelist": [ os.getenv("OAUTH_WHITELIST_REGEX", "") ],
-  #           "icon": "fa-google",
-  #           "token_key": "access_token",
-  #           "remote_app": {
-  #               "client_id": os.environ.get("GOOGLE_KEY"),
-  #               "client_secret": os.environ.get("GOOGLE_SECRET"),
-  #               "api_base_url": "https://www.googleapis.com/oauth2/v2/",
-  #               "client_kwargs": {"scope": "email profile"},
-  #               "request_token_url": None,
-  #               "access_token_url": "https://accounts.google.com/o/oauth2/token",
-  #               "authorize_url": "https://accounts.google.com/o/oauth2/auth",
-  #               "authorize_params": {"hd": os.getenv("OAUTH_HOME_DOMAIN", "")}
-  #           }
-  #       }
-  #   ]
-  #   # Map Authlib roles to superset roles
-  #   AUTH_ROLE_ADMIN = 'Admin'
-  #   AUTH_ROLE_PUBLIC = 'Public'
-  #   # Will allow user self registration, allowing to create Flask users from Authorized User
-  #   AUTH_USER_REGISTRATION = True
-  #   # The default user self registration role
-  #   AUTH_USER_REGISTRATION_ROLE = "Admin"
+  database: |
+    import os
+    from sqlalchemy.engine.url import URL
+    SQLALCHEMY_DATABASE_URI = f"postgresql://{os.getenv('DB_USER')}:{os.getenv('DB_PASS')}@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
+
+  redis: |
+    import os
+    CELERY_BROKER_URL = f"redis://:{os.getenv('REDIS_PASSWORD')}@{os.getenv('REDIS_HOST')}:{os.getenv('REDIS_PORT')}/0"
+
+  auth_oauth: |
+    import os
+    from flask_appbuilder.security.manager import AUTH_OAUTH
+
+    AUTH_TYPE = AUTH_OAUTH
+
+    OAUTH_PROVIDERS = [
+        {
+            "name": "keycloak",
+            "token_key": "access_token",
+            "icon": "fa-key",
+            "remote_app": {
+                "client_id": os.getenv("KEYCLOAK_CLIENT_ID"),
+                "client_secret": os.getenv("KEYCLOAK_CLIENT_SECRET"),
+                "client_kwargs": {
+                    "scope": "openid email profile",
+                },
+                "access_token_url": "https://id-corp.k8s-legacy.dc.anotaai-production.com/realms/tech/protocol/openid-connect/token",
+                "authorize_url": "https://id-corp.k8s-legacy.dc.anotaai-production.com/realms/tech/protocol/openid-connect/auth",
+                "api_base_url": "https://id-corp.k8s-legacy.dc.anotaai-production.com/realms/tech/protocol/openid-connect",
+                "jwks_uri": "https://id-corp.k8s-legacy.dc.anotaai-production.com/realms/tech/protocol/openid-connect/certs",
+                "client_options": {
+                    "token_endpoint_auth_method": "client_secret_post",
+                    "scope": "openid email profile",
+                },
+            }
+        }
+    ]
+    # Configuração para criar usuários automaticamente ao fazer login
+    AUTH_USER_REGISTRATION = True
+    AUTH_USER_REGISTRATION_ROLE = "Gamma"
+
+    # Redirecionamento após logout
+    LOGOUT_REDIRECT_URL = "http://localhost:8088/logout/"
   # secret: |
   #   # Generate your own secret key for encryption. Use `openssl rand -base64 42` to generate a good key
   #   SECRET_KEY = 'CHANGE_ME_TO_A_COMPLEX_RANDOM_SECRET'
@@ -277,7 +305,7 @@ supersetNode:
     - ". {{ .Values.configMountPath }}/superset_bootstrap.sh; /usr/bin/run-server.sh"
   connections:
     # -- Change in case of bringing your own redis and then also set redis.enabled:false
-    redis_host: "{{ .Release.Name }}-redis-headless"
+    redis_host: "meu-redis-host"
     redis_port: "6379"
     redis_user: ""
     # redis_password: superset
@@ -289,11 +317,11 @@ supersetNode:
       enabled: false
       ssl_cert_reqs: CERT_NONE
     # You need to change below configuration incase bringing own PostgresSQL instance and also set postgresql.enabled:false
-    db_host: "{{ .Release.Name }}-postgresql"
+    db_host: "meu-postgresql-host"
     db_port: "5432"
-    db_user: superset
-    db_pass: superset
-    db_name: superset
+    db_user: "superset"
+    db_pass: "minha_senha_segura"
+    db_name: "superset"
   env: {}
   # -- If true, forces deployment to reload on each upgrade
   forceReload: false
@@ -798,7 +826,7 @@ postgresql:
   ##
   ## Use the PostgreSQL chart dependency.
   ## Set to false if bringing your own PostgreSQL.
-  enabled: true
+  enabled: false
 
   ## Authentication parameters
   auth:
@@ -846,7 +874,7 @@ redis:
   ## If you are bringing your own redis, you can set the host in supersetNode.connections.redis_host
   ##
   ## Set to false if bringing your own redis.
-  enabled: true
+  enabled: false
   ##
   ## Set architecture to standalone/replication
   architecture: standalone
