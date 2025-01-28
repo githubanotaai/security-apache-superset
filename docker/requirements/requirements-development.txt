@@ -1,2 +1,0 @@
-PyAthena[Pandas]>=1.0.0
-pyathenajdbc

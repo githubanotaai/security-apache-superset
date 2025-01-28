@@ -27,6 +27,45 @@ import sys
 from celery.schedules import crontab
 from flask_caching.backends.filesystemcache import FileSystemCache
 
+############################ AUTHENTICATION ##############################
+
+from flask_appbuilder.security.manager import AUTH_OAUTH
+
+AUTH_TYPE = AUTH_OAUTH
+
+OAUTH_PROVIDERS = [
+    {
+        'name': 'keycloak',
+        'token_key': 'access_token',  
+        'icon': 'fa-key',
+        'remote_app': {
+            'client_id': os.getenv("KEYCLOAK_CLIENT_ID"),
+            'client_secret': os.getenv("KEYCLOAK_CLIENT_SECRET"),
+            'client_kwargs': {
+                'scope': 'openid email profile',
+            },
+            'access_token_url': 'https://id-corp.k8s-legacy.dc.anotaai-production.com/realms/tech/protocol/openid-connect/token',
+            'authorize_url': 'https://id-corp.k8s-legacy.dc.anotaai-production.com/realms/tech/protocol/openid-connect/auth',
+            'api_base_url': 'https://id-corp.k8s-legacy.dc.anotaai-production.com/realms/tech/protocol/openid-connect',
+            'jwks_uri': 'https://id-corp.k8s-legacy.dc.anotaai-production.com/realms/tech/protocol/openid-connect/certs',
+            'client_options': {
+                'token_endpoint_auth_method': 'client_secret_post',
+                'scope': 'openid email profile',
+            },
+        }
+    }
+]
+
+# Configuração para criar usuários automaticamente ao fazer login
+AUTH_USER_REGISTRATION = True
+AUTH_USER_REGISTRATION_ROLE = "Gamma"
+
+# Redirecionamento após logout
+LOGOUT_REDIRECT_URL = "http://localhost:8088/logout/"
+
+
+##########################################################################
+
 logger = logging.getLogger()
 
 DATABASE_DIALECT = os.getenv("DATABASE_DIALECT")
