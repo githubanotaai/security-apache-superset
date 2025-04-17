@@ -16,6 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+// TODO: Remove fa-icon
+/* eslint-disable icons/no-fa-icons-usage */
 import { type FC, useCallback, useMemo, useRef, useState } from 'react';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 import { nanoid } from 'nanoid';
@@ -28,13 +30,10 @@ import {
   t,
 } from '@superset-ui/core';
 import AutoSizer from 'react-virtualized-auto-sizer';
-import Icons from 'src/components/Icons';
+import { Icons } from 'src/components/Icons';
 import type { SqlLabRootState } from 'src/SqlLab/types';
-import {
-  Skeleton,
-  AntdBreadcrumb as Breadcrumb,
-  AntdDropdown,
-} from 'src/components';
+import { Skeleton, AntdBreadcrumb as Breadcrumb, Button } from 'src/components';
+import { Dropdown } from 'src/components/Dropdown';
 import FilterableTable from 'src/components/FilterableTable';
 import Tabs from 'src/components/Tabs';
 import {
@@ -61,21 +60,22 @@ type Props = {
 const extensionsRegistry = getExtensionsRegistry();
 
 const COLUMN_KEYS = ['column_name', 'column_type', 'keys', 'comment'];
+// TODO: Remove fa-icon
 const MENUS = [
   {
     key: 'refresh-table',
     label: t('Refresh table schema'),
-    icon: <i aria-hidden className="fa fa-refresh" />,
+    icon: <Icons.SyncOutlined iconSize="s" aria-hidden />,
   },
   {
     key: 'copy-select-statement',
     label: t('Copy SELECT statement'),
-    icon: <i aria-hidden className="fa fa-clipboard m-l-2" />,
+    icon: <Icons.CopyOutlined iconSize="s" aria-hidden />,
   },
   {
     key: 'show-create-view-statement',
     label: t('Show CREATE VIEW statement'),
-    icon: <i aria-hidden className="fa fa-eye" />,
+    icon: <Icons.EyeOutlined iconSize="s" aria-hidden />,
   },
 ];
 const TAB_HEADER_HEIGHT = 80;
@@ -104,7 +104,7 @@ const renderWell = (partitions: TableMetaData['partitions']) => {
         text={partitionQuery}
         shouldShowText={false}
         tooltipText={tt}
-        copyNode={<i className="fa fa-clipboard" />}
+        copyNode={<Icons.CopyOutlined iconSize="s" />}
       />
     );
   }
@@ -306,10 +306,10 @@ const TablePreview: FC<Props> = ({ dbId, catalog, schema, tableName }) => {
         )}
       </div>
       <Title>
-        <Icons.Table iconSize="l" />
+        <Icons.InsertRowAboveOutlined iconSize="l" />
         {tableName}
-        <AntdDropdown
-          overlay={
+        <Dropdown
+          dropdownRender={() => (
             <Menu
               onClick={({ key }) => {
                 if (key === 'refresh-table') {
@@ -324,15 +324,17 @@ const TablePreview: FC<Props> = ({ dbId, catalog, schema, tableName }) => {
               }}
               items={dropdownMenu}
             />
-          }
+          )}
           trigger={['click']}
         >
-          <Icons.DownSquareOutlined
-            iconSize="m"
-            style={{ marginTop: 2, marginLeft: 4 }}
-            aria-label={t('Table actions')}
-          />
-        </AntdDropdown>
+          <Button buttonSize="xsmall" type="link">
+            <Icons.DownSquareOutlined
+              iconSize="m"
+              style={{ marginTop: 2, marginLeft: 4 }}
+              aria-label={t('Table actions')}
+            />
+          </Button>
+        </Dropdown>
       </Title>
       {isMetadataRefreshing ? (
         <Skeleton active />

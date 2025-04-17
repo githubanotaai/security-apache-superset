@@ -56,11 +56,12 @@ import Mousetrap from 'mousetrap';
 import Button from 'src/components/Button';
 import Timer from 'src/components/Timer';
 import ResizableSidebar from 'src/components/ResizableSidebar';
-import { AntdDropdown, Skeleton } from 'src/components';
+import { Dropdown } from 'src/components/Dropdown';
+import { Skeleton } from 'src/components';
 import { Switch } from 'src/components/Switch';
 import { Input } from 'src/components/Input';
 import { Menu } from 'src/components/Menu';
-import Icons from 'src/components/Icons';
+import { Icons } from 'src/components/Icons';
 import { detectOS } from 'src/utils/common';
 import {
   addNewQueryEditor,
@@ -868,9 +869,14 @@ const SqlEditor: FC<Props> = ({
               <span>
                 <ShareSqlLabQuery queryEditorId={queryEditor.id} />
               </span>
-              <AntdDropdown overlay={renderDropdown()} trigger={['click']}>
-                <Icons.MoreHoriz iconColor={theme.colors.grayscale.base} />
-              </AntdDropdown>
+              <Dropdown
+                dropdownRender={() => renderDropdown()}
+                trigger={['click']}
+              >
+                <Button buttonSize="xsmall" type="link" showMarginRight={false}>
+                  <Icons.EllipsisOutlined />
+                </Button>
+              </Dropdown>
             </div>
           </>
         )}

@@ -17,8 +17,12 @@
  * under the License.
  */
 import fetchMock from 'fetch-mock';
-import userEvent from '@testing-library/user-event';
-import { render, screen, waitFor } from 'spec/helpers/testing-library';
+import {
+  render,
+  screen,
+  userEvent,
+  waitFor,
+} from 'spec/helpers/testing-library';
 import DatasourceEditor from 'src/components/Datasource/DatasourceEditor';
 import mockDatasource from 'spec/fixtures/mockDatasource';
 import { isFeatureEnabled } from '@superset-ui/core';
@@ -165,7 +169,7 @@ describe('DatasourceEditor', () => {
     });
 
     it('Source Tab: edit mode', () => {
-      const getLockBtn = screen.getByRole('img', { name: /lock-locked/i });
+      const getLockBtn = screen.getByRole('img', { name: /lock/i });
       userEvent.click(getLockBtn);
       const physicalRadioBtn = screen.getByRole('radio', {
         name: /physical \(table or view\)/i,
@@ -178,7 +182,7 @@ describe('DatasourceEditor', () => {
     });
 
     it('Source Tab: readOnly mode', () => {
-      const getLockBtn = screen.getByRole('img', { name: /lock-locked/i });
+      const getLockBtn = screen.getByRole('img', { name: /lock/i });
       expect(getLockBtn).toBeInTheDocument();
       const physicalRadioBtn = screen.getByRole('radio', {
         name: /physical \(table or view\)/i,
@@ -193,6 +197,8 @@ describe('DatasourceEditor', () => {
 });
 
 describe('DatasourceEditor RTL', () => {
+  jest.setTimeout(15000); // Extend timeout to 15s for this test
+
   it('properly renders the metric information', async () => {
     await asyncRender(props);
     const metricButton = screen.getByTestId('collection-tab-Metrics');

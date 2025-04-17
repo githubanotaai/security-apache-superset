@@ -18,9 +18,14 @@
  */
 import * as redux from 'react-redux';
 import sinon from 'sinon';
-import { render, screen, act, waitFor } from 'spec/helpers/testing-library';
+import {
+  act,
+  render,
+  screen,
+  userEvent,
+  waitFor,
+} from 'spec/helpers/testing-library';
 import thunk from 'redux-thunk';
-import { Provider } from 'react-redux';
 import configureStore from 'redux-mock-store';
 
 import AdhocFilter from 'src/explore/components/controls/FilterControl/AdhocFilter';
@@ -30,13 +35,7 @@ import {
   OPERATOR_ENUM_TO_OPERATOR_TYPE,
 } from 'src/explore/constants';
 import AdhocMetric from 'src/explore/components/controls/MetricControl/AdhocMetric';
-import {
-  supersetTheme,
-  FeatureFlag,
-  ThemeProvider,
-  isFeatureEnabled,
-} from '@superset-ui/core';
-import userEvent from '@testing-library/user-event';
+import { FeatureFlag, isFeatureEnabled } from '@superset-ui/core';
 import fetchMock from 'fetch-mock';
 
 import { TestDataset } from '@superset-ui/chart-controls';
@@ -331,25 +330,25 @@ describe('AdhocFilterEditPopoverSimpleTabContent', () => {
       expect(isOperatorRelevant(operator, 'value')).toBe(true);
     });
   });
-  it('sets comparator to true when operator is IS_TRUE', () => {
+  it('sets comparator to undefined when operator is IS_TRUE', () => {
     const props = setup();
     const { onOperatorChange } = useSimpleTabFilterProps(props);
     onOperatorChange(Operators.IsTrue);
     expect(props.onChange.calledOnce).toBe(true);
     expect(props.onChange.lastCall.args[0].operatorId).toBe(Operators.IsTrue);
-    expect(props.onChange.lastCall.args[0].operator).toBe('==');
-    expect(props.onChange.lastCall.args[0].comparator).toBe(true);
+    expect(props.onChange.lastCall.args[0].operator).toBe('IS TRUE');
+    expect(props.onChange.lastCall.args[0].comparator).toBe(undefined);
   });
-  it('sets comparator to false when operator is IS_FALSE', () => {
+  it('sets comparator to undefined when operator is IS_FALSE', () => {
     const props = setup();
     const { onOperatorChange } = useSimpleTabFilterProps(props);
     onOperatorChange(Operators.IsFalse);
     expect(props.onChange.calledOnce).toBe(true);
     expect(props.onChange.lastCall.args[0].operatorId).toBe(Operators.IsFalse);
-    expect(props.onChange.lastCall.args[0].operator).toBe('==');
-    expect(props.onChange.lastCall.args[0].comparator).toBe(false);
+    expect(props.onChange.lastCall.args[0].operator).toBe('IS FALSE');
+    expect(props.onChange.lastCall.args[0].comparator).toBe(undefined);
   });
-  it('sets comparator to null when operator is IS_NULL or IS_NOT_NULL', () => {
+  it('sets comparator to undefined when operator is IS_NULL or IS_NOT_NULL', () => {
     const props = setup();
     const { onOperatorChange } = useSimpleTabFilterProps(props);
     [Operators.IsNull, Operators.IsNotNull].forEach(op => {
@@ -359,7 +358,7 @@ describe('AdhocFilterEditPopoverSimpleTabContent', () => {
       expect(props.onChange.lastCall.args[0].operator).toBe(
         OPERATOR_ENUM_TO_OPERATOR_TYPE[op].operation,
       );
-      expect(props.onChange.lastCall.args[0].comparator).toBe(null);
+      expect(props.onChange.lastCall.args[0].comparator).toBe(undefined);
     });
   });
 });
@@ -390,14 +389,9 @@ const store = mockStore({});
 describe('AdhocFilterEditPopoverSimpleTabContent Advanced data Type Test', () => {
   const setupFilter = async (props: Props) => {
     await act(async () => {
-      render(
-        <Provider store={store}>
-          <ThemeProvider theme={supersetTheme}>
-            <AdhocFilterEditPopoverSimpleTabContent {...props} />
-          </ThemeProvider>
-          ,
-        </Provider>,
-      );
+      render(<AdhocFilterEditPopoverSimpleTabContent {...props} />, {
+        store,
+      });
     });
   };
 
